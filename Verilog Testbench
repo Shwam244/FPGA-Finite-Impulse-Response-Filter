@@ -1,0 +1,83 @@
+`timescale 1ns / 1ps
+
+module tb_fir_filter;
+  
+  //Testbench Signals
+  logic clk = 0;
+  logic rst = 1;
+  logic signed [15:0] x_in = 16'b0;
+  logic signed [37:0] y_out;
+  
+  //Instantiate DUT
+  fir_filter dut (
+    .clk(clk),
+    .rst(rst),
+    .x_in(x_in),
+    .y_out(y_out)
+  );
+  
+  //Generate CLK
+  always #5 clk = ~clk;
+  
+  //File Reading
+  integer file_in, r, i;
+  logic signed [15:0] input_val;
+  
+  //Testing
+  initial begin
+    file_in = $fopen("input_signal.txt", "r");
+    if (file_in == 0) begin
+      $display("ERROR: Could not open input_signal.txt!");
+      $finish;
+    end
+    
+    rst = 1;
+    repeat(5) @(posedge clk);
+    rst = 0;
+    @(posedge clk);
+    i = 0;
+    while (!$feof(file_in)) begin
+      r = $fscanf(file_in, "%h\n", input_val);
+      if (r == 1) begin
+        x_in <= input_val;
+        @(posedge clk);
+        #1;
+        $display("Time=%0t, Input=%d, Output=%d", $time, input_val, y_out);
+        i = i + 1;
+      end
+    end
+    
+    $fclose(file_in);
+    $display("Finishes processing %0d samples.", i);
+    $finish;
+  end
+  
+  //Waveform dump
+  initial begin
+    $dumpfile("fir_wave.vcd");
+    $dumpvars(0, tb_fir_filter);
+  end
+
+  initial begin
+    #10_000_000;
+    $display("ERROR");
+    $finish;
+  end
+  
+  integer file_out;
+  initial begin
+    file_out = $fopen("hardware_output.txt", "w");
+    
+    while (!$feof(file_in)) begin
+      r = $fscanf(file_in, "%h\n", input_val);
+      if (r == 1) begin
+        x_in <= input_val;
+        @(posedge clk);
+        #1;
+        $fwrite(file_out, "%d\n", y_out);
+      end
+    end
+    $fclose(file_out);
+  end
+  
+endmodule
