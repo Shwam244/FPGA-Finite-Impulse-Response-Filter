@@ -48,7 +48,6 @@ writematrix(hex_vals, 'taps.hex', 'FileType', 'text');
 
 % 8. Export signal for implementation in systemverilog
 
-signal_fi = fi(noisy_signal, 1, 16, 15);
-raw_signal_int = signal_fi.int;
-hex_signal = dec2hex(typecast(int16(raw_signal_int), 'uint16'), 4);
-writematrix(hex_signal, 'signal.hex', 'FileType', 'text');
+raw_signal_int2 = int16(noisy_signal_fi.int);
+hex_signal2 = dec2hex(raw_signal_int2, 4);
+writematrix(hex_signal2, 'signal.hex', 'FileType', 'text');
